@@ -7,6 +7,7 @@ import sqlite3
 import Config
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import numpy as np
 
 access_token=Config.TOKEN
 expires_in=86400
@@ -35,23 +36,20 @@ def parsingLoop():
 		conn, cur = sqlInit()
 		r = requests.get(URL).json()
 		now = datetime.datetime.now()
-		with open("friends.json", "a") as f:
-			f.write(json.dumps(r))
-
-		f.close()
-
 		lst = r["response"]
 		for l in lst:
 			cur.execute("""INSERT INTO 'online_requests' (request_time, usr_online) VALUES (?, ?);
 			""", (now, l))
 		conn.commit()
-		print("Done")
 		time.sleep(2)
 
-def animate(j):
+def timeLines():
 	conn, cur = sqlInit()
 	cur.execute("SELECT * FROM online_requests ORDER BY usr_online;")
 	all_results = cur.fetchall()
+	gx = []
+	gy = []
+	gn = []
 	x = []
 	y = []
 	i = 0
@@ -59,8 +57,9 @@ def animate(j):
 	ax1.clear()
 	for result in all_results:
 		if result[2] != uId:
-			ax1.plot(x, y, label="№ " + str(i) + " " + str(uId))
-			ax1.legend()
+			gx.append(x)
+			gy.append(y)
+			gn.append("№ " + str(i) + " " + str(uId))
 			uId = result[2]
 			i = i + 1
 			x = []
@@ -68,18 +67,55 @@ def animate(j):
 		else:
 			x.append(result[1])
 			y.append(i)
+	return(gx, gy, gn)
 
-def marking():
+def animate(j):
+	gx, gy, gn = timeLines()
+	matrixLoop(gx, gy, gn)
+	for num in range(len(gn)):
+		ax1.plot(gx[num], gy[num], label=gn[num])
+		ax1.legend()
+
+def monitorLoop():
 	while True:
 		ani = animation.FuncAnimation(fig, animate, interval=1000)
 		plt.show()
+		
+def coatingTime(gx1, gy1, gx2, gy2):
+	l = 0
+	e = 0
+	for g in gx1:
+		if g in gx2:
+			l = l + 1
+			e = e + 1
+		else:
+			l = l + 1
+	for g in gx2:
+		if g in gx1:
+			pass
+		else:
+			l = l + 1
+	if l > 0:
+		return(e/l)
+	else:
+		return(100)
 
+def matrixLoop(gx, gy, gn):
+	for n in gn:
+		print(n, "\n")
+	matr = np.zeros((len(gn), len(gn)))
+	for num in range(len(gn)):
+		for num2 in range(num):
+			matr[num][num2] = coatingTime(gx[num], gy[num], gx[num2], gy[num2])
+	print(matr)
 
-ford = threading.Thread(name='foreground', target=marking)
-back = threading.Thread(name='background', target=parsingLoop)
+ford = threading.Thread(name='foreground', target=parsingLoop)
+back = threading.Thread(name='background', target=monitorLoop)
+#back2 = threading.Thread(name='background', target=matrixLoop)
 
 ford.start()
 back.start()
+#back2.start()
 
 conn, cur = sqlInit()
 
