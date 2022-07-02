@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import datetime
@@ -15,8 +16,18 @@ user_id=344666363
 
 URL = "https://api.vk.com/method/friends.getOnline?v=5.81&access_token=" + access_token
 
+track = []
+print("Hom many peoples you would like to track?")
+quant = int(input())
+for q in range(quant):
+	print("\n User id = ")
+	track.append(int(input()))
+
 fig = plt.figure()
 ax1 = fig.add_subplot(1, 1, 1)
+
+if os.path.isfile("requests.db"):
+	os.remove("requests.db")
 
 def sqlInit():
 	conn = sqlite3.connect('requests.db',
@@ -59,7 +70,7 @@ def timeLines():
 		if result[2] != uId:
 			gx.append(x)
 			gy.append(y)
-			gn.append("№ " + str(i) + " " + str(uId))
+			gn.append(uId)
 			uId = result[2]
 			i = i + 1
 			x = []
@@ -81,7 +92,7 @@ def monitorLoop():
 		ani = animation.FuncAnimation(fig, animate, interval=1000)
 		plt.show()
 		
-def coatingTime(gx1, gy1, gx2, gy2):
+def coatingTime(gx1, gx2):
 	l = 0
 	e = 0
 	for g in gx1:
@@ -98,7 +109,7 @@ def coatingTime(gx1, gy1, gx2, gy2):
 	if l > 0:
 		return(e/l)
 	else:
-		return(100)
+		return(0)
 
 def matrixLoop(gx, gy, gn):
 	for n in gn:
@@ -106,16 +117,27 @@ def matrixLoop(gx, gy, gn):
 	matr = np.zeros((len(gn), len(gn)))
 	for num in range(len(gn)):
 		for num2 in range(num):
-			matr[num][num2] = coatingTime(gx[num], gy[num], gx[num2], gy[num2])
+			matr[num][num2] = coatingTime(gx[num], gx[num2])
 	print(matr)
+	print("\n\n")
+	for n in track:
+		print(n, "\n")
+	matr2 = np.zeros((quant, quant))
+	for i in range(quant):
+		for j in range(quant):
+			#print(track[i], track[j], gn)
+			if (track[i] in gn) & (track[j] in gn):
+				n1 = gn.index(track[i])
+				n2 = gn.index(track[j])
+				matr2[i][j] = matr[n1][n2]
+				matr2[j][i] = matr[n2][n1]
+	print(matr2)
 
 ford = threading.Thread(name='foreground', target=parsingLoop)
 back = threading.Thread(name='background', target=monitorLoop)
-#back2 = threading.Thread(name='background', target=matrixLoop)
 
 ford.start()
 back.start()
-#back2.start()
 
 conn, cur = sqlInit()
 
