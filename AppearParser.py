@@ -5,12 +5,17 @@ import requests
 import json 
 import sqlite3
 import Config
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 access_token=Config.TOKEN
 expires_in=86400
 user_id=344666363
 
 URL = "https://api.vk.com/method/friends.getOnline?v=5.81&access_token=" + access_token
+
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 1, 1)
 
 def sqlInit():
 	conn = sqlite3.connect('requests.db',
@@ -28,7 +33,7 @@ def sqlInit():
 def parsingLoop():
 	while True:
 		conn, cur = sqlInit()
-		r = requests.get(URL).json()#["response"]["items"]
+		r = requests.get(URL).json()
 		now = datetime.datetime.now()
 		with open("friends.json", "a") as f:
 			f.write(json.dumps(r))
@@ -42,14 +47,32 @@ def parsingLoop():
 		conn.commit()
 		print("Done")
 		time.sleep(2)
-		
+
+def animate(j):
+	conn, cur = sqlInit()
+	cur.execute("SELECT * FROM online_requests ORDER BY usr_online;")
+	all_results = cur.fetchall()
+	x = []
+	y = []
+	i = 0
+	uId = 0
+	ax1.clear()
+	for result in all_results:
+		if result[2] != uId:
+			ax1.plot(x, y, label="№ " + str(i) + " " + str(uId))
+			ax1.legend()
+			uId = result[2]
+			i = i + 1
+			x = []
+			y = []
+		else:
+			x.append(result[1])
+			y.append(i)
+
 def marking():
 	while True:
-		print("hi")
-		time.sleep(2)
-
-
-#parsingLoop(cur)
+		ani = animation.FuncAnimation(fig, animate, interval=1000)
+		plt.show()
 
 
 ford = threading.Thread(name='foreground', target=marking)
@@ -59,10 +82,6 @@ ford.start()
 back.start()
 
 conn, cur = sqlInit()
-cur.execute("SELECT * FROM online_requests;")
-all_results = cur.fetchall()
-for result in all_results:
-	print(result)
 
 cur.close()
 conn.close()
