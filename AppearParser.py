@@ -52,7 +52,7 @@ def parsingLoop():
 			cur.execute("""INSERT INTO 'online_requests' (request_time, usr_online) VALUES (?, ?);
 			""", (now, l))
 		conn.commit()
-		time.sleep(2)
+		time.sleep(10)
 
 def timeLines():
 	conn, cur = sqlInit()
@@ -91,6 +91,7 @@ def monitorLoop():
 	while True:
 		ani = animation.FuncAnimation(fig, animate, interval=1000)
 		plt.show()
+		time.sleep(30)
 		
 def coatingTime(gx1, gx2):
 	l = 0
@@ -112,8 +113,6 @@ def coatingTime(gx1, gx2):
 		return(0)
 
 def matrixLoop(gx, gy, gn):
-	for n in gn:
-		print(n, "\n")
 	matr = np.zeros((len(gn), len(gn)))
 	for num in range(len(gn)):
 		for num2 in range(num):
@@ -125,13 +124,29 @@ def matrixLoop(gx, gy, gn):
 	matr2 = np.zeros((quant, quant))
 	for i in range(quant):
 		for j in range(quant):
-			#print(track[i], track[j], gn)
 			if (track[i] in gn) & (track[j] in gn):
 				n1 = gn.index(track[i])
 				n2 = gn.index(track[j])
 				matr2[i][j] = matr[n1][n2]
 				matr2[j][i] = matr[n2][n1]
 	print(matr2)
+	with open("Matrix.txt", "w") as f:
+		for n in gn:
+			f.write(str(n) +  "\n")
+		for i in range(len(gn)):
+			for j in range(len(gn)):
+				s = str(int(matr[i][j] * 100))
+				f.write(str(gn[i]) + "-")
+				f.write(str(gn[j]) + "-")
+				f.write(s)
+				if len(s) == 1:
+					f.write("   ")
+				elif len(s) == 2:
+					f.write("  ")
+				elif len(s) == 3:
+					f.write(" ")
+			f.write("\n")
+		f.close()
 
 ford = threading.Thread(name='foreground', target=parsingLoop)
 back = threading.Thread(name='background', target=monitorLoop)
