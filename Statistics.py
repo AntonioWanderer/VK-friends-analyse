@@ -1,11 +1,8 @@
+import Config
 import os
 import sqlite3
 import matplotlib.pyplot as plt
 import numpy as np
-
-IDGLOB = [444883822,
-	208358821,
-	217241399]
 
 def sqlInit(i):
 	conn = sqlite3.connect("requests/requests"+str(i)+".db",
@@ -74,7 +71,7 @@ def compCouple(id1, id2):
 	return comparator(base1, base2)
 
 def compAndDescribeAll():
-	ids = IDGLOB
+	ids = Config.IDGLOB
 	leng = len(ids)
 	matrix = np.zeros((leng, leng))
 	flatten = []
@@ -82,7 +79,7 @@ def compAndDescribeAll():
 	i = 0
 	for i1 in range(leng):
 		for i2 in range(i1 + 1):
-			z = compCouple(ids[i1], ids[i2])/6
+			z = compCouple(ids[i1], ids[i2])/30
 			print(ids[i1], ids[i2])
 			matrix[i1][i2] = z
 			matrix[i2][i1] = z

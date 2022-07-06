@@ -34,7 +34,7 @@ def parsingLoop(conn, cur):
 			cur.execute("""INSERT INTO 'online_requests' (request_time, usr_online) VALUES (?, ?);""", (now, l))
 		print(now)
 		conn.commit()
-		time.sleep(10)
+		time.sleep(2)
 
 i = 0
 while True:
