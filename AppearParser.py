@@ -5,12 +5,49 @@ import requests
 import json 
 import sqlite3
 import Config
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
-access_token=Config.TOKEN
-expires_in=86400
-user_id=344666363
+start = datetime.datetime.now()
 
-URL = "https://api.vk.com/method/friends.getOnline?v=5.81&access_token=" + access_token
+def genToken():
+	driver = webdriver.Chrome(ChromeDriverManager().install())
+	#driver = webdriver.Chrome(
+	#executable_path=r'/chromedriver')
+	driver.get(Config.LINK)
+	access_token = ''
+	while not access_token:
+		page_url = driver.current_url
+
+		if 'access_token' in page_url:
+        		#token
+                #token_start = page_url.index(TOKEN) + len(TOKEN)
+                #access_token = page_url[token_start:token_start+ATOKEN_LEN]
+			break
+
+		else:
+			time.sleep(1)
+
+	print(access_token)
+
+	# Для удобства сохраняем XPath формы авторизации
+	#username = '//*[@id="login_submit"]/div/div/input[6]'
+	#password = '//*[@id="login_submit"]/div/div/input[7]'
+	#login = '//*[@id="install_allow"]'
+
+	# Заполняем форму авторизации
+	#driver.find_element_by_xpath(username).send_keys(vk['login'])
+	#driver.find_element_by_xpath(password).send_keys(vk['password'])
+	#driver.find_element_by_xpath(login).click()
+
+	#print(driver.current_url)
+
+	
+
+def accessInit():
+	access_token=Config.TOKEN
+	URL = "https://api.vk.com/method/friends.getOnline?v=5.81&access_token=" + access_token
+	return URL
 
 def sqlInit(i):
 	conn = sqlite3.connect("requests/requests"+str(i)+".db",
@@ -25,7 +62,7 @@ def sqlInit(i):
 	conn.commit()
 	return(conn, cur)
 
-def parsingLoop(conn, cur):
+def parsingLoop(URL, conn, cur):
 	for j in range(100):
 		r = requests.get(URL).json()
 		now = datetime.datetime.now()
@@ -35,12 +72,16 @@ def parsingLoop(conn, cur):
 		print(now)
 		conn.commit()
 		time.sleep(2)
+def Parse(URL):
+	i = 0
+	while True:
+		i = i + 1
+		conn, cur = sqlInit(i)
+		parsingLoop(URL, conn, cur)
 
-i = 0
-while True:
-	i = i + 1
-	conn, cur = sqlInit(i)
-	parsingLoop(conn, cur)
-
-	cur.close()
-	conn.close()
+		cur.close()
+		conn.close()
+	
+genToken()	
+#URL = accessInit()
+#Parse(URL)
